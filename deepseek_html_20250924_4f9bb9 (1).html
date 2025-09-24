@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Trunfo - Duelo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #f1c40f;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .phase-info {
+            background-color: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .cards-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+        
+        .player-area, .opponent-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .player-title, .opponent-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .player-title {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .opponent-title {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .card {
+            width: 100%;
+            max-width: 300px;
+            height: 400px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .card-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .card-image {
+            flex-grow: 1;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 10px 0;
+        }
+        
+        .card-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+        }
+        
+        .stat-name {
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .attributes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .attribute-btn {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .attribute-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .attribute-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .game-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-primary:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #c0392b;
+        }
+        
+        .result {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .win {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .lose {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .draw {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            background-color: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .score-item {
+            text-align: center;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .menu {
+            display: none;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .menu h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .menu-btn {
+            padding: 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .menu-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .cards-list {
+            display: none;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .card-item {
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-item h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .help-content, .credits-content {
+            display: none;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .help-content h2, .credits-content h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .help-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .back-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .auto-advance {
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .cards-container {
+                flex-direction: column;
+            }
+            
+            .card {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Super Trunfo - Duelo</h1>
+            <div class="subtitle">Desafie a IA em 5 fases emocionantes!</div>
+        </header>
+        
+        <div class="game-area" id="gameArea">
+            <div class="phase-info" id="phaseInfo">Fase 1 de 5</div>
+            
+            <div class="cards-container">
+                <div class="player-area">
+                    <div class="player-title">JOGADOR</div>
+                    <div class="card" id="playerCard">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <div class="card-header" id="playerCardName">Carta do Jogador</div>
+                                <div class="card-image" id="playerCardImage"></div>
+                                <div class="card-stats">
+                                    <div class="stat">
+                                        <span class="stat-name">Força:</span>
+                                        <span class="stat-value" id="playerStrength">0</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-name">Velocidade:</span>
+                                        <span class="stat-value" id="playerSpeed">0</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-name">Inteligência:</span>
+                                        <span class="stat-value" id="playerIntelligence">0</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-name">Resistência:</span>
+                                        <span class="stat-value" id="playerResistance">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-back">
+                                <div class="card-header">Super Trunfo</div>
+                                <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+                                    <div style="font-size: 3rem;">?</div>
+                                </div>
+                                <div style="font-size: 1.2rem;">Selecione uma carta para revelar</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="opponent-area">
+                    <div class="opponent-title">OPONENTE (IA)</div>
+                    <div class="card" id="opponentCard">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <div class="card-header" id="opponentCardName">Carta da IA</div>
+                                <div class="card-image" id="opponentCardImage"></div>
+                                <div class="card-stats">
+                                    <div class="stat">
+                                        <span class="stat-name">Força:</span>
+                                        <span class="stat-value" id="opponentStrength">?</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-name">Velocidade:</span>
+                                        <span class="stat-value" id="opponentSpeed">?</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-name">Inteligência:</span>
+                                        <span class="stat-value" id="opponentIntelligence">?</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-name">Resistência:</span>
+                                        <span class="stat-value" id="opponentResistance">?</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-back">
+                                <div class="card-header">Super Trunfo</div>
+                                <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+                                    <div style="font-size: 3rem;">?</div>
+                                </div>
+                                <div style="font-size: 1.2rem;">Carta do oponente</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="attributes" id="attributes">
+                    <!-- Os botões de atributos serão gerados dinamicamente -->
+                </div>
+                
+                <div class="auto-advance" id="autoAdvanceText">Avançando para próxima fase em <span id="countdown">5</span> segundos...</div>
+                
+                <div class="game-buttons">
+                    <button class="btn btn-primary" id="nextPhaseBtn">Próxima Fase</button>
+                    <button class="btn btn-secondary" id="menuBtn">Menu</button>
+                </div>
+            </div>
+            
+            <div class="result" id="result"></div>
+            
+            <div class="score-board">
+                <div class="score-item">
+                    <div>Fase</div>
+                    <div class="score-value" id="phaseScore">1/5</div>
+                </div>
+                <div class="score-item">
+                    <div>Vitórias</div>
+                    <div class="score-value" id="winScore">0</div>
+                </div>
+                <div class="score-item">
+                    <div>Derrotas</div>
+                    <div class="score-value" id="loseScore">0</div>
+                </div>
+                <div class="score-item">
+                    <div>Pontuação</div>
+                    <div class="score-value" id="totalScore">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu" id="mainMenu">
+            <h2>Super Trunfo - Menu Principal</h2>
+            <div class="menu-buttons">
+                <button class="menu-btn" id="startGameBtn">Iniciar Jogo</button>
+                <button class="menu-btn" id="showCardsBtn">Mostrar Cartas</button>
+                <button class="menu-btn" id="helpBtn">Ajuda</button>
+                <button class="menu-btn" id="creditsBtn">Créditos</button>
+                <button class="menu-btn" id="exitBtn">Sair</button>
+            </div>
+        </div>
+        
+        <div class="cards-list" id="cardsList">
+            <h2>Todas as Cartas do Jogo</h2>
+            <!-- A lista de cartas será gerada dinamicamente -->
+            <button class="back-btn" id="backFromCardsBtn">Voltar ao Menu</button>
+        </div>
+        
+        <div class="help-content" id="helpContent">
+            <h2>Como Jogar Super Trunfo</h2>
+            <p>Super Trunfo é um jogo de cartas onde você compara atributos com seu oponente.</p>
+            
+            <h3>Regras do Jogo:</h3>
+            <ul>
+                <li>O jogo consiste em 5 fases (duelos)</li>
+                <li>Em cada fase, você e a IA recebem uma carta aleatória</li>
+                <li>Você escolhe um atributo para comparar com a carta da IA</li>
+                <li>O jogador com o maior valor no atributo escolhido vence a fase</li>
+                <li>Em caso de empate, a fase é considerada um empate</li>
+                <li>Ao final de 5 fases, o jogador com mais vitórias vence o duelo</li>
+            </ul>
+            
+            <h3>Atributos das Cartas:</h3>
+            <ul>
+                <li><strong>Força:</strong> Representa o poder físico da carta</li>
+                <li><strong>Velocidade:</strong> Indica a agilidade e rapidez</li>
+                <li><strong>Inteligência:</strong> Mostra a capacidade estratégica</li>
+                <li><strong>Resistência:</strong> Demonstra a capacidade de suportar danos</li>
+            </ul>
+            
+            <button class="back-btn" id="backFromHelpBtn">Voltar ao Menu</button>
+        </div>
+        
+        <div class="credits-content" id="creditsContent">
+            <h2>Créditos</h2>
+            <p><strong>Super Trunfo - Duelo</strong></p>
+            <p>Desenvolvido como parte do Trabalho Prático de Laboratório de Programação</p>
+            <p>Utilizando HTML, CSS e JavaScript</p>
+            <p>Ano: 2025</p>
+            
+            <button class="back-btn" id="backFromCreditsBtn">Voltar ao Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // Estrutura de dados para as cartas
+        const cards = [
+            { id: 1, name: "Cavaleiro Áurico", image: "🛡️", strength: 85, speed: 60, intelligence: 70, resistance: 90 },
+            { id: 2, name: "Mago das Chamas", image: "🔥", strength: 50, speed: 70, intelligence: 95, resistance: 65 },
+            { id: 3, name: "Arqueira Celeste", image: "🏹", strength: 65, speed: 90, intelligence: 80, resistance: 60 },
+            { id: 4, name: "Guerreiro das Sombras", image: "⚔️", strength: 80, speed: 85, intelligence: 65, resistance: 75 },
+            { id: 5, name: "Feiticeira do Gelo", image: "❄️", strength: 55, speed: 65, intelligence: 90, resistance: 80 },
+            { id: 6, name: "Paladino da Luz", image: "✨", strength: 90, speed: 55, intelligence: 75, resistance: 95 },
+            { id: 7, name: "Ladino Veloz", image: "⚡", strength: 60, speed: 95, intelligence: 85, resistance: 55 },
+            { id: 8, name: "Bárbaro Feroz", image: "💢", strength: 95, speed: 75, intelligence: 50, resistance: 85 },
+            { id: 9, name: "Druida da Natureza", image: "🌿", strength: 70, speed: 65, intelligence: 85, resistance: 90 },
+            { id: 10, name: "Necromante Sombrio", image: "💀", strength: 75, speed: 60, intelligence: 95, resistance: 70 }
+        ];
+
+        // Variáveis do jogo
+        let currentPhase = 0;
+        let playerWins = 0;
+        let iaWins = 0;
+        let totalScore = 0;
+        let playerCard = null;
+        let iaCard = null;
+        let gameStarted = false;
+        let countdownInterval = null;
+        let canSelectAttribute = false;
+
+        // Elementos do DOM
+        const gameArea = document.getElementById('gameArea');
+        const mainMenu = document.getElementById('mainMenu');
+        const cardsList = document.getElementById('cardsList');
+        const helpContent = document.getElementById('helpContent');
+        const creditsContent = document.getElementById('creditsContent');
+        
+        const phaseInfo = document.getElementById('phaseInfo');
+        const phaseScore = document.getElementById('phaseScore');
+        const winScore = document.getElementById('winScore');
+        const loseScore = document.getElementById('loseScore');
+        const totalScoreElement = document.getElementById('totalScore');
+        
+        const playerCardElement = document.getElementById('playerCard');
+        const opponentCardElement = document.getElementById('opponentCard');
+        
+        const attributesDiv = document.getElementById('attributes');
+        const resultDiv = document.getElementById('result');
+        const autoAdvanceText = document.getElementById('autoAdvanceText');
+        const countdownElement = document.getElementById('countdown');
+        
+        const nextPhaseBtn = document.getElementById('nextPhaseBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        
+        // Botões do menu
+        const startGameBtn = document.getElementById('startGameBtn');
+        const showCardsBtn = document.getElementById('showCardsBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const creditsBtn = document.getElementById('creditsBtn');
+        const exitBtn = document.getElementById('exitBtn');
+        
+        // Botões de voltar
+        const backFromCardsBtn = document.getElementById('backFromCardsBtn');
+        const backFromHelpBtn = document.getElementById('backFromHelpBtn');
+        const backFromCreditsBtn = document.getElementById('backFromCreditsBtn');
+
+        // Inicialização do jogo
+        function init() {
+            showMainMenu();
+            setupEventListeners();
+            generateCardsList();
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botões do menu principal
+            startGameBtn.addEventListener('click', startGame);
+            showCardsBtn.addEventListener('click', showCards);
+            helpBtn.addEventListener('click', showHelp);
+            creditsBtn.addEventListener('click', showCredits);
+            exitBtn.addEventListener('click', exitGame);
+            
+            // Botões de voltar
+            backFromCardsBtn.addEventListener('click', showMainMenu);
+            backFromHelpBtn.addEventListener('click', showMainMenu);
+            backFromCreditsBtn.addEventListener('click', showMainMenu);
+            
+            // Botões do jogo
+            nextPhaseBtn.addEventListener('click', nextPhase);
+            menuBtn.addEventListener('click', showMainMenu);
+        }
+
+        // Mostrar menu principal
+        function showMainMenu() {
+            gameArea.style.display = 'none';
+            cardsList.style.display = 'none';
+            helpContent.style.display = 'none';
+            creditsContent.style.display = 'none';
+            mainMenu.style.display = 'block';
+            
+            // Resetar o jogo se estiver em andamento
+            if (gameStarted) {
+                resetGame();
+            }
+        }
+
+        // Mostrar lista de cartas
+        function showCards() {
+            mainMenu.style.display = 'none';
+            cardsList.style.display = 'block';
+        }
+
+        // Mostrar ajuda
+        function showHelp() {
+            mainMenu.style.display = 'none';
+            helpContent.style.display = 'block';
+        }
+
+        // Mostrar créditos
+        function showCredits() {
+            mainMenu.style.display = 'none';
+            creditsContent.style.display = 'block';
+        }
+
+        // Sair do jogo
+        function exitGame() {
+            if (confirm("Tem certeza que deseja sair do jogo?")) {
+                window.close();
+            }
+        }
+
+        // Gerar lista de cartas para exibição
+        function generateCardsList() {
+            const cardsListContainer = document.getElementById('cardsList');
+            // Limpar conteúdo anterior
+            while (cardsListContainer.children.length > 2) {
+                cardsListContainer.removeChild(cardsListContainer.lastChild);
+            }
+            
+            // Adicionar cada carta à lista
+            cards.forEach(card => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.innerHTML = `
+                    <h3>${card.name} ${card.image}</h3>
+                    <div class="stat"><span class="stat-name">Força:</span> <span>${card.strength}</span></div>
+                    <div class="stat"><span class="stat-name">Velocidade:</span> <span>${card.speed}</span></div>
+                    <div class="stat"><span class="stat-name">Inteligência:</span> <span>${card.intelligence}</span></div>
+                    <div class="stat"><span class="stat-name">Resistência:</span> <span>${card.resistance}</span></div>
+                `;
+                cardsListContainer.insertBefore(cardItem, backFromCardsBtn);
+            });
+        }
+
+        // Iniciar o jogo
+        function startGame() {
+            gameStarted = true;
+            currentPhase = 0;
+            playerWins = 0;
+            iaWins = 0;
+            totalScore = 0;
+            
+            updateScores();
+            mainMenu.style.display = 'none';
+            gameArea.style.display = 'flex';
+            
+            nextPhase();
+        }
+
+        // Resetar o jogo
+        function resetGame() {
+            gameStarted = false;
+            currentPhase = 0;
+            playerWins = 0;
+            iaWins = 0;
+            totalScore = 0;
+            
+            // Esconder resultado
+            resultDiv.style.display = 'none';
+            autoAdvanceText.style.display = 'none';
+            
+            // Resetar cartas
+            playerCardElement.classList.remove('flipped');
+            opponentCardElement.classList.remove('flipped');
+            
+            // Limpar atributos
+            attributesDiv.innerHTML = '';
+            
+            // Parar contagem regressiva
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            // Resetar botão
+            nextPhaseBtn.textContent = 'Próxima Fase';
+            nextPhaseBtn.disabled = false;
+        }
+
+        // Avançar para a próxima fase
+        function nextPhase() {
+            if (currentPhase >= 5) {
+                endGame();
+                return;
+            }
+            
+            currentPhase++;
+            updateScores();
+            
+            // Sortear cartas para o jogador e a IA
+            playerCard = getRandomCard();
+            iaCard = getRandomCard();
+            
+            // Atualizar a interface com as novas cartas
+            updateCardDisplay(playerCard, 'player');
+            updateCardDisplay(iaCard, 'opponent');
+            
+            // Esconder resultado anterior
+            resultDiv.style.display = 'none';
+            autoAdvanceText.style.display = 'none';
+            
+            // Criar botões de atributos
+            createAttributeButtons();
+            
+            // Atualizar informações da fase
+            phaseInfo.textContent = `Fase ${currentPhase} de 5`;
+            
+            // Virar as cartas (mostrar o verso)
+            playerCardElement.classList.remove('flipped');
+            opponentCardElement.classList.remove('flipped');
+            
+            // Habilitar seleção de atributos
+            canSelectAttribute = true;
+            
+            // Desabilitar o botão de próxima fase até que um atributo seja escolhido
+            nextPhaseBtn.disabled = true;
+        }
+
+        // Obter uma carta aleatória
+        function getRandomCard() {
+            const randomIndex = Math.floor(Math.random() * cards.length);
+            return cards[randomIndex];
+        }
+
+        // Atualizar a exibição da carta
+        function updateCardDisplay(card, player) {
+            const prefix = player === 'player' ? 'player' : 'opponent';
+            
+            document.getElementById(`${prefix}CardName`).textContent = card.name;
+            document.getElementById(`${prefix}CardImage`).style.backgroundImage = `none`;
+            document.getElementById(`${prefix}CardImage`).innerHTML = `<div style="font-size: 5rem;">${card.image}</div>`;
+            
+            // Mostrar valores apenas para o jogador, manter "?" para a IA
+            if (player === 'player') {
+                document.getElementById(`${prefix}Strength`).textContent = card.strength;
+                document.getElementById(`${prefix}Speed`).textContent = card.speed;
+                document.getElementById(`${prefix}Intelligence`).textContent = card.intelligence;
+                document.getElementById(`${prefix}Resistance`).textContent = card.resistance;
+            } else {
+                document.getElementById(`${prefix}Strength`).textContent = '?';
+                document.getElementById(`${prefix}Speed`).textContent = '?';
+                document.getElementById(`${prefix}Intelligence`).textContent = '?';
+                document.getElementById(`${prefix}Resistance`).textContent = '?';
+            }
+        }
+
+        // Criar botões de atributos
+        function createAttributeButtons() {
+            attributesDiv.innerHTML = '';
+            
+            const attributes = [
+                { name: 'Força', key: 'strength' },
+                { name: 'Velocidade', key: 'speed' },
+                { name: 'Inteligência', key: 'intelligence' },
+                { name: 'Resistência', key: 'resistance' }
+            ];
+            
+            attributes.forEach(attr => {
+                const button = document.createElement('button');
+                button.className = 'attribute-btn';
+                button.textContent = attr.name;
+                button.addEventListener('click', () => {
+                    if (canSelectAttribute) {
+                        compareAttributes(attr.key, attr.name);
+                    }
+                });
+                attributesDiv.appendChild(button);
+            });
+        }
+
+        // Comparar atributos entre as cartas
+        function compareAttributes(attribute, attributeName) {
+            // Impedir múltiplas seleções
+            canSelectAttribute = false;
+            
+            // Desabilitar botões de atributo
+            const attributeButtons = document.querySelectorAll('.attribute-btn');
+            attributeButtons.forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Virar as cartas para mostrar os valores
+            playerCardElement.classList.add('flipped');
+            opponentCardElement.classList.add('flipped');
+            
+            // Revelar os valores da IA
+            document.getElementById('opponentStrength').textContent = iaCard.strength;
+            document.getElementById('opponentSpeed').textContent = iaCard.speed;
+            document.getElementById('opponentIntelligence').textContent = iaCard.intelligence;
+            document.getElementById('opponentResistance').textContent = iaCard.resistance;
+            
+            // Obter valores dos atributos
+            const playerValue = playerCard[attribute];
+            const iaValue = iaCard[attribute];
+            
+            // Determinar o resultado
+            let resultText = '';
+            let resultClass = '';
+            
+            if (playerValue > iaValue) {
+                resultText = `Você venceu a fase ${currentPhase}! Seu ${attributeName} (${playerValue}) é maior que o da IA (${iaValue}).`;
+                resultClass = 'win';
+                playerWins++;
+                totalScore += 100 * currentPhase; // Pontuação aumenta a cada fase
+            } else if (playerValue < iaValue) {
+                resultText = `Você perdeu a fase ${currentPhase}. O ${attributeName} da IA (${iaValue}) é maior que o seu (${playerValue}).`;
+                resultClass = 'lose';
+                iaWins++;
+            } else {
+                resultText = `Empate na fase ${currentPhase}! Ambos têm ${attributeName} de ${playerValue}.`;
+                resultClass = 'draw';
+                totalScore += 50; // Pontuação menor por empate
+            }
+            
+            // Atualizar a exibição do resultado
+            resultDiv.textContent = resultText;
+            resultDiv.className = `result ${resultClass}`;
+            resultDiv.style.display = 'block';
+            
+            // Atualizar placar
+            updateScores();
+            
+            // Se for a última fase, mudar o texto do botão
+            if (currentPhase === 5) {
+                nextPhaseBtn.textContent = 'Ver Resultado Final';
+            } else {
+                nextPhaseBtn.textContent = 'Próxima Fase';
+            }
+            
+            // Habilitar o botão de próxima fase
+            nextPhaseBtn.disabled = false;
+            
+            // Iniciar contagem regressiva para avanço automático
+            startCountdown();
+        }
+
+        // Iniciar contagem regressiva para avanço automático
+        function startCountdown() {
+            let countdown = 5;
+            countdownElement.textContent = countdown;
+            autoAdvanceText.style.display = 'block';
+            
+            countdownInterval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    if (currentPhase < 5) {
+                        nextPhase();
+                    } else {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Atualizar placar
+        function updateScores() {
+            phaseScore.textContent = `${currentPhase}/5`;
+            winScore.textContent = playerWins;
+            loseScore.textContent = iaWins;
+            totalScoreElement.textContent = totalScore;
+        }
+
+        // Finalizar o jogo
+        function endGame() {
+            // Parar contagem regressiva se estiver ativa
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            let finalMessage = '';
+            
+            if (playerWins > iaWins) {
+                finalMessage = `Parabéns! Você venceu o duelo por ${playerWins} a ${iaWins}. Sua pontuação final: ${totalScore}`;
+                resultDiv.className = 'result win';
+            } else if (playerWins < iaWins) {
+                finalMessage = `Que pena! Você perdeu o duelo por ${iaWins} a ${playerWins}. Sua pontuação final: ${totalScore}`;
+                resultDiv.className = 'result lose';
+            } else {
+                finalMessage = `O duelo terminou em empate! ${playerWins} a ${iaWins}. Sua pontuação final: ${totalScore}`;
+                resultDiv.className = 'result draw';
+            }
+            
+            resultDiv.textContent = finalMessage;
+            resultDiv.style.display = 'block';
+            autoAdvanceText.style.display = 'none';
+            
+            // Alterar o botão para permitir jogar novamente
+            nextPhaseBtn.textContent = 'Jogar Novamente';
+            nextPhaseBtn.removeEventListener('click', nextPhase);
+            nextPhaseBtn.addEventListener('click', startGame);
+        }
+
+        // Inicializar o jogo quando a página carregar
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
