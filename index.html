@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Super Trunfo - Duelo</title>
     <style>
         * {
@@ -382,7 +382,32 @@
             font-style: italic;
             color: #7f8c8d;
         }
-        
+
+        /* Small enhancements for the menu inputs */
+        .menu-inputs {
+            display:flex;
+            gap:10px;
+            justify-content:center;
+            margin-bottom:12px;
+            flex-wrap:wrap;
+        }
+        .menu-inputs input, .menu-inputs select {
+            padding:10px;
+            border-radius:6px;
+            border:1px solid #ccc;
+        }
+
+        #rankingBox {
+            margin-top:15px;
+            max-width:320px;
+            margin-left:auto;
+            margin-right:auto;
+            background:#f1f1f1;
+            padding:10px;
+            border-radius:8px;
+            color:#222;
+        }
+
         @media (max-width: 768px) {
             .cards-container {
                 flex-direction: column;
@@ -517,12 +542,30 @@
         
         <div class="menu" id="mainMenu">
             <h2>Super Trunfo - Menu Principal</h2>
+
+            <div class="menu-inputs">
+                <input id="playerName" placeholder="Seu nome" maxlength="20" />
+                <select id="difficultySelect">
+                    <option value="easy">Fácil</option>
+                    <option value="medium">Médio</option>
+                    <option value="hard">Difícil</option>
+                </select>
+            </div>
+
             <div class="menu-buttons">
                 <button class="menu-btn" id="startGameBtn">Iniciar Jogo</button>
                 <button class="menu-btn" id="showCardsBtn">Mostrar Cartas</button>
                 <button class="menu-btn" id="helpBtn">Ajuda</button>
                 <button class="menu-btn" id="creditsBtn">Créditos</button>
                 <button class="menu-btn" id="exitBtn">Sair</button>
+            </div>
+
+            <div id="rankingBox">
+                <h3>🏆 Ranking (Top 5)</h3>
+                <ol id="rankingList"></ol>
+                <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+                    <button id="clearRankingBtn" style="background:#e74c3c;">Limpar Ranking</button>
+                </div>
             </div>
         </div>
         
@@ -569,7 +612,7 @@
     </div>
 
     <script>
-        // Estrutura de dados para as cartas
+        // === Dados das cartas (seu conjunto original) ===
         const cards = [
             { id: 1, name: "Cavaleiro Áurico", image: "🛡️", strength: 85, speed: 60, intelligence: 70, resistance: 90 },
             { id: 2, name: "Mago das Chamas", image: "🔥", strength: 50, speed: 70, intelligence: 95, resistance: 65 },
@@ -583,7 +626,7 @@
             { id: 10, name: "Necromante Sombrio", image: "💀", strength: 75, speed: 60, intelligence: 95, resistance: 70 }
         ];
 
-        // Variáveis do jogo
+        // === Estado do jogo ===
         let currentPhase = 0;
         let playerWins = 0;
         let iaWins = 0;
@@ -594,7 +637,11 @@
         let countdownInterval = null;
         let canSelectAttribute = false;
 
-        // Elementos do DOM
+        // Configuráveis pela UI (nome e dificuldade)
+        let playerName = "Jogador";
+        let difficulty = "easy"; // easy | medium | hard
+
+        // === Elementos DOM ===
         const gameArea = document.getElementById('gameArea');
         const mainMenu = document.getElementById('mainMenu');
         const cardsList = document.getElementById('cardsList');
@@ -617,43 +664,51 @@
         
         const nextPhaseBtn = document.getElementById('nextPhaseBtn');
         const menuBtn = document.getElementById('menuBtn');
-        
-        // Botões do menu
+
+        // Menu buttons + inputs
         const startGameBtn = document.getElementById('startGameBtn');
         const showCardsBtn = document.getElementById('showCardsBtn');
         const helpBtn = document.getElementById('helpBtn');
         const creditsBtn = document.getElementById('creditsBtn');
         const exitBtn = document.getElementById('exitBtn');
-        
+        const playerNameInput = document.getElementById('playerName');
+        const difficultySelect = document.getElementById('difficultySelect');
+        const rankingList = document.getElementById('rankingList');
+        const clearRankingBtn = document.getElementById('clearRankingBtn');
+
         // Botões de voltar
         const backFromCardsBtn = document.getElementById('backFromCardsBtn');
         const backFromHelpBtn = document.getElementById('backFromHelpBtn');
         const backFromCreditsBtn = document.getElementById('backFromCreditsBtn');
 
-        // Inicialização do jogo
+        // Inicialização
         function init() {
-            showMainMenu();
             setupEventListeners();
             generateCardsList();
+            loadRanking();
+            showMainMenu();
         }
 
-        // Configurar event listeners
         function setupEventListeners() {
-            // Botões do menu principal
             startGameBtn.addEventListener('click', startGame);
             showCardsBtn.addEventListener('click', showCards);
             helpBtn.addEventListener('click', showHelp);
             creditsBtn.addEventListener('click', showCredits);
             exitBtn.addEventListener('click', exitGame);
-            
-            // Botões de voltar
+
             backFromCardsBtn.addEventListener('click', showMainMenu);
             backFromHelpBtn.addEventListener('click', showMainMenu);
             backFromCreditsBtn.addEventListener('click', showMainMenu);
-            
-            // Botões do jogo
+
             nextPhaseBtn.addEventListener('click', nextPhase);
             menuBtn.addEventListener('click', showMainMenu);
+
+            clearRankingBtn.addEventListener('click', () => {
+                if (confirm('Limpar ranking (Top 5) ?')) {
+                    localStorage.removeItem('st_ranking_v1');
+                    loadRanking();
+                }
+            });
         }
 
         // Mostrar menu principal
@@ -691,15 +746,17 @@
         // Sair do jogo
         function exitGame() {
             if (confirm("Tem certeza que deseja sair do jogo?")) {
-                window.close();
+                // Em navegadores, window.close() só fecha janelas abertas via script.
+                // Vamos voltar ao menu como fallback.
+                showMainMenu();
             }
         }
 
         // Gerar lista de cartas para exibição
         function generateCardsList() {
             const cardsListContainer = document.getElementById('cardsList');
-            // Limpar conteúdo anterior
-            while (cardsListContainer.children.length > 2) {
+            // Limpar conteúdo anterior, mantendo o botão "Voltar ao Menu" no final
+            while (cardsListContainer.children.length > 1) {
                 cardsListContainer.removeChild(cardsListContainer.lastChild);
             }
             
@@ -720,6 +777,11 @@
 
         // Iniciar o jogo
         function startGame() {
+            // Lê nome e dificuldade do menu
+            const inputName = (playerNameInput.value || '').trim();
+            playerName = inputName.length ? inputName : 'Jogador';
+            difficulty = difficultySelect.value || 'easy';
+
             gameStarted = true;
             currentPhase = 0;
             playerWins = 0;
@@ -745,7 +807,7 @@
             resultDiv.style.display = 'none';
             autoAdvanceText.style.display = 'none';
             
-            // Resetar cartas
+            // Resetar cartas (verso)
             playerCardElement.classList.remove('flipped');
             opponentCardElement.classList.remove('flipped');
             
@@ -761,10 +823,18 @@
             // Resetar botão
             nextPhaseBtn.textContent = 'Próxima Fase';
             nextPhaseBtn.disabled = false;
+
+            // Reset text fields if desired (kept user name)
         }
 
         // Avançar para a próxima fase
         function nextPhase() {
+            // Se o botão atual está em "Jogar Novamente", reiniciar
+            if (!gameStarted && nextPhaseBtn.textContent === 'Jogar Novamente') {
+                startGame();
+                return;
+            }
+
             if (currentPhase >= 5) {
                 endGame();
                 return;
@@ -773,9 +843,9 @@
             currentPhase++;
             updateScores();
             
-            // Sortear cartas para o jogador e a IA
+            // Sortear cartas para o jogador e a IA (IA com estratégia)
             playerCard = getRandomCard();
-            iaCard = getRandomCard();
+            iaCard = getIACardAgainst(playerCard, difficulty);
             
             // Atualizar a interface com as novas cartas
             updateCardDisplay(playerCard, 'player');
@@ -800,12 +870,74 @@
             
             // Desabilitar o botão de próxima fase até que um atributo seja escolhido
             nextPhaseBtn.disabled = true;
+
+            // Iniciar contagem para seleção (se o jogador não selecionar, IA pode optar por "auto-compare")
+            startPlayerSelectionCountdown();
         }
 
-        // Obter uma carta aleatória
+        // Retorna carta aleatória para o jogador
         function getRandomCard() {
             const randomIndex = Math.floor(Math.random() * cards.length);
             return cards[randomIndex];
+        }
+
+        // IA escolhe carta baseada na carta do jogador e na dificuldade
+        // easy -> aleatório
+        // medium -> preferir cartas que tenham alguma vantagem (probabilístico)
+        // hard -> escolher a carta com maior vantagem geral
+        function getIACardAgainst(playerCard, difficultyLevel) {
+            if (difficultyLevel === 'easy') {
+                return getRandomCard();
+            }
+
+            // Para escolher estrategicamente, calcule "vantagem" de cada carta
+            const candidates = cards.slice(); // clone
+            // Compute score = sum(iaAttr - playerAttr)
+            const scored = candidates.map(c => {
+                const sumDiff =
+                    (c.strength - playerCard.strength) +
+                    (c.speed - playerCard.speed) +
+                    (c.intelligence - playerCard.intelligence) +
+                    (c.resistance - playerCard.resistance);
+                return { card: c, score: sumDiff };
+            });
+
+            // Hard: escolha o maior score (se empate, aleatório entre os maiores)
+            if (difficultyLevel === 'hard') {
+                let maxScore = Math.max(...scored.map(s => s.score));
+                let best = scored.filter(s => s.score === maxScore).map(s => s.card);
+                // Se a carta do jogador for escolhida como "melhor", evite selecioná-la (assegura cartas diferentes)
+                best = best.filter(c => c.id !== playerCard.id);
+                if (best.length === 0) {
+                    // fallback: random (se só houver a mesma carta)
+                    return getRandomCard();
+                }
+                return best[Math.floor(Math.random() * best.length)];
+            }
+
+            // Medium: escolha ponderada. Mais chance para cartas com score alto, mas não 100%
+            if (difficultyLevel === 'medium') {
+                // Remove a própria carta do jogador da escolha preferencial
+                const list = scored.map(s => {
+                    // Add offset to make all positive
+                    return { card: s.card, weight: Math.max(0, s.score) + 1 };
+                }).filter(x => x.card.id !== playerCard.id);
+
+                // normalize weights
+                const totalWeight = list.reduce((a,b) => a + b.weight, 0);
+                // pick by weight
+                const rnd = Math.random() * totalWeight;
+                let acc = 0;
+                for (let i=0;i<list.length;i++) {
+                    acc += list[i].weight;
+                    if (rnd <= acc) return list[i].card;
+                }
+                // fallback
+                return list.length ? list[list.length-1].card : getRandomCard();
+            }
+
+            // fallback
+            return getRandomCard();
         }
 
         // Atualizar a exibição da carta
@@ -847,6 +979,7 @@
                 button.textContent = attr.name;
                 button.addEventListener('click', () => {
                     if (canSelectAttribute) {
+                        // player selecionou um atributo -> compare
                         compareAttributes(attr.key, attr.name);
                     }
                 });
@@ -855,7 +988,7 @@
         }
 
         // Comparar atributos entre as cartas
-        function compareAttributes(attribute, attributeName) {
+        function compareAttributes(attribute, attributeName, iaChosenAttribute=null) {
             // Impedir múltiplas seleções
             canSelectAttribute = false;
             
@@ -883,19 +1016,25 @@
             let resultText = '';
             let resultClass = '';
             
+            // Pontuação por vitória depende da dificuldade
+            const phaseMultiplier = currentPhase; // mantém sua ideia de aumentar por fase
+            const baseVictoryPoints = (difficulty === 'easy') ? 50 : (difficulty === 'medium') ? 100 : 150;
+            const victoryPoints = baseVictoryPoints * phaseMultiplier;
+            
             if (playerValue > iaValue) {
                 resultText = `Você venceu a fase ${currentPhase}! Seu ${attributeName} (${playerValue}) é maior que o da IA (${iaValue}).`;
                 resultClass = 'win';
                 playerWins++;
-                totalScore += 100 * currentPhase; // Pontuação aumenta a cada fase
+                totalScore += victoryPoints; // Pontuação por dificuldade e fase
             } else if (playerValue < iaValue) {
                 resultText = `Você perdeu a fase ${currentPhase}. O ${attributeName} da IA (${iaValue}) é maior que o seu (${playerValue}).`;
                 resultClass = 'lose';
                 iaWins++;
+                // possível penalidade: nenhuma por enquanto
             } else {
                 resultText = `Empate na fase ${currentPhase}! Ambos têm ${attributeName} de ${playerValue}.`;
                 resultClass = 'draw';
-                totalScore += 50; // Pontuação menor por empate
+                totalScore += Math.floor(victoryPoints / 2); // metade dos pontos por empate
             }
             
             // Atualizar a exibição do resultado
@@ -920,18 +1059,23 @@
             startCountdown();
         }
 
-        // Iniciar contagem regressiva para avanço automático
+        // Iniciar contagem regressiva para avanço automático (após resultado)
         function startCountdown() {
             let countdown = 5;
             countdownElement.textContent = countdown;
             autoAdvanceText.style.display = 'block';
+            autoAdvanceText.innerHTML = `Avançando para próxima fase em <span id="countdown">${countdown}</span> segundos...`;
             
+            // Limpar qualquer intervalo anterior
+            if (countdownInterval) clearInterval(countdownInterval);
             countdownInterval = setInterval(() => {
                 countdown--;
-                countdownElement.textContent = countdown;
+                const el = document.getElementById('countdown');
+                if (el) el.textContent = countdown;
                 
                 if (countdown <= 0) {
                     clearInterval(countdownInterval);
+                    countdownInterval = null;
                     if (currentPhase < 5) {
                         nextPhase();
                     } else {
@@ -939,6 +1083,48 @@
                     }
                 }
             }, 1000);
+        }
+
+        // Start de contagem enquanto jogador deve escolher atributo (se não escolher, IA "auto-play")
+        function startPlayerSelectionCountdown() {
+            // tempo para o jogador escolher
+            let t = 12;
+            autoAdvanceText.style.display = 'block';
+            autoAdvanceText.textContent = `Escolha um atributo em ${t} segundos...`;
+            // limpa antigo
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                t--;
+                if (t <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    // auto escolha do jogador: para simular, vamos escolher atributo que maximize o jogador
+                    autoPlayerAttributeChoice();
+                } else {
+                    autoAdvanceText.textContent = `Escolha um atributo em ${t} segundos...`;
+                }
+            }, 1000);
+        }
+
+        // Se jogador não escolher, escolher automaticamente o melhor atributo dele (ou azar dependendo da dificuldade)
+        function autoPlayerAttributeChoice() {
+            // Se canSelectAttribute false, nada
+            if (!canSelectAttribute) return;
+            // cálculo simples: escolha do maior atributo do jogador
+            const attrs = ['strength','speed','intelligence','resistance'];
+            // basic strategy: if difficulty is hard, IA already advantaged; but here for fairness choose best for player
+            let bestAttr = attrs[0];
+            let bestVal = playerCard[bestAttr];
+            for (let i=1;i<attrs.length;i++){
+                const k = attrs[i];
+                if (playerCard[k] > bestVal) {
+                    bestVal = playerCard[k];
+                    bestAttr = k;
+                }
+            }
+            // map to name
+            const nameMap = { strength: 'Força', speed: 'Velocidade', intelligence: 'Inteligência', resistance: 'Resistência' };
+            compareAttributes(bestAttr, nameMap[bestAttr]);
         }
 
         // Atualizar placar
@@ -960,14 +1146,17 @@
             let finalMessage = '';
             
             if (playerWins > iaWins) {
-                finalMessage = `Parabéns! Você venceu o duelo por ${playerWins} a ${iaWins}. Sua pontuação final: ${totalScore}`;
+                finalMessage = `Parabéns ${playerName}! Você venceu o duelo por ${playerWins} a ${iaWins}. Sua pontuação final: ${totalScore}`;
                 resultDiv.className = 'result win';
+                // bônus extra por vencer no hard
+                if (difficulty === 'hard') totalScore += 300;
             } else if (playerWins < iaWins) {
-                finalMessage = `Que pena! Você perdeu o duelo por ${iaWins} a ${playerWins}. Sua pontuação final: ${totalScore}`;
+                finalMessage = `Que pena ${playerName}! Você perdeu o duelo por ${iaWins} a ${playerWins}. Sua pontuação final: ${totalScore}`;
                 resultDiv.className = 'result lose';
             } else {
                 finalMessage = `O duelo terminou em empate! ${playerWins} a ${iaWins}. Sua pontuação final: ${totalScore}`;
                 resultDiv.className = 'result draw';
+                totalScore += 100;
             }
             
             resultDiv.textContent = finalMessage;
@@ -976,11 +1165,42 @@
             
             // Alterar o botão para permitir jogar novamente
             nextPhaseBtn.textContent = 'Jogar Novamente';
-            nextPhaseBtn.removeEventListener('click', nextPhase);
-            nextPhaseBtn.addEventListener('click', startGame);
+            // remove listener to avoid duplicate handlers and set new behavior
+            // we will keep event but intercept in nextPhase for restart
+            gameStarted = false;
+
+            // Salvar ranking (persistente)
+            saveRanking(playerName, totalScore);
+            loadRanking();
         }
 
-        // Inicializar o jogo quando a página carregar
+        // =========================
+        // Ranking (localStorage)
+        // =========================
+        const RANKING_KEY = 'st_ranking_v1';
+
+        function loadRanking() {
+            const data = JSON.parse(localStorage.getItem(RANKING_KEY) || '[]');
+            const list = data.slice(0,5);
+            rankingList.innerHTML = '';
+            list.forEach(entry => {
+                const li = document.createElement('li');
+                li.textContent = `${entry.name} — ${entry.score} pts`;
+                rankingList.appendChild(li);
+            });
+        }
+
+        function saveRanking(name, score) {
+            if (!name) name = 'Jogador';
+            const raw = JSON.parse(localStorage.getItem(RANKING_KEY) || '[]');
+            raw.push({ name, score });
+            raw.sort((a,b) => b.score - a.score);
+            // keep more entries but top 20 maybe
+            const truncated = raw.slice(0, 20); 
+            localStorage.setItem(RANKING_KEY, JSON.stringify(truncated));
+        }
+
+        // Inicializar quando a página carregar
         window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
